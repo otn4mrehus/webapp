@@ -20,11 +20,12 @@ kartusiswa/
 ```
 ### C. Download/Ekstrak
 ```
-git clone https://github.com/otn4mrehus/webapp.git
-chmod 777 kartu_siswa
+git clone https://github.com/otn4mrehus/webapp.git && \
+chmod 777 kartu_siswa && \
+mkdir -p images && \
 ```
 
 ### D. Run 
 ```
-127.0.0.1/kartu_siswa
+http://127.0.0.1/kartu_siswa
 ```
