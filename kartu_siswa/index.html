@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kartu Pelajar SMK/SMA</title>
+  <title>Kartu Pelajar SMKN 6 Kota Serang</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     .kartu {
-      width: 339px; height: 204px; /* 85.6mm x 53.98mm @96dpi */
+      width: 339px;
+      height: 204px;
+      background-color: white;
       background-size: cover;
       background-position: center;
-      background-repeat: no-repeat;
-      background-color: white;
+      position: relative;
     }
     table td { padding: 2px 4px; font-size: 0.75rem; }
     .logo-sekolah { width: 40px; height: 40px; }
@@ -23,7 +24,6 @@
 
 <div class="max-w-7xl mx-auto">
   <div class="grid grid-cols-1 md:grid-cols-10 gap-4">
-    <!-- Form Input -->
     <form id="formData" class="md:col-span-3 bg-blue-50 p-4 rounded-xl shadow-lg space-y-3 text-sm">
       <h2 class="text-lg font-bold text-blue-800">Input Data Siswa</h2>
       <div id="siswaContainer"></div>
@@ -31,9 +31,8 @@
       <button type="button" onclick="updatePreview()" class="bg-green-600 w-full text-white py-2 mt-4 rounded font-semibold">Preview Kartu</button>
     </form>
 
-    <!-- Preview -->
     <div class="md:col-span-7 bg-white p-4 rounded-xl shadow-xl">
-      <h1 class="text-xl font-bold text-center mb-4 text-gray-800">CETAK KARTU PELAJAR - SMK/SMA</h1>
+      <h1 class="text-xl font-bold text-center mb-4 text-gray-800">CETAK KARTU PELAJAR - SMKN 6 KOTA SERANG</h1>
       <div id="previewWrapper" class="flex flex-wrap gap-4 justify-center"></div>
       <div class="mt-6 text-center space-x-2">
         <button onclick="downloadPNG()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Download PNG</button>
@@ -51,11 +50,12 @@
     const div = document.createElement('div');
     div.className = "bg-white p-3 mb-3 rounded shadow";
     div.innerHTML = `
-      <label class="block">Nama <input name="nama" type="text" class="w-full border p-1 rounded" /></label>
-      <label class="block">NIK <input name="nik" type="text" class="w-full border p-1 rounded" /></label>
-      <label class="block">NIS <input name="nis" type="text" class="w-full border p-1 rounded" /></label>
-      <label class="block">NISN <input name="nisn" type="text" class="w-full border p-1 rounded" /></label>
-      <label class="block">Alamat <input name="alamat" type="textarea" class="w-full border p-1 rounded" /></label>
+      <label class="block">Nama <input name="nama" type="text" class="w-full border p-1 rounded" placeholder="Isikan nama lengkap" required /></label>
+      <label class="block">NIK <input name="nik" type="text" class="w-full border p-1 rounded" placeholder="NIK (16 digit angka)" pattern="\\d{16}" title="NIK harus terdiri dari 16 digit angka" required oninput="this.setCustomValidity(this.validity.patternMismatch ? 'Harus 16 digit angka!' : '')"/></label>
+      <label class="block">NIS <input name="nis" type="text" class="w-full border p-1 rounded" placeholder="NIS (6 digit, tanya Kesiswaan)" pattern="\\d{6}" title="NIS harus terdiri dari 6 digit angka" required oninput="this.setCustomValidity(this.validity.patternMismatch ? 'Harus 6 digit angka!' : '')"/></label>
+      <label class="block">NISN <input name="nisn" type="text" class="w-full border p-1 rounded" placeholder="NISN (Cek ijazah SMP/MTs)" pattern="\\d{10,16}" title="NISN harus terdiri dari minimal 10 digit angka" required oninput="this.setCustomValidity(this.validity.patternMismatch ? 'Minimal 10 digit angka!' : '')"/></label>
+      <label class="block">Tempat/Tanggal Lahir <input name="ttl" type="text" class="w-full border p-1 rounded" placeholder="Tempat, Tanggal Lahir" required /></label>
+      <label class="block">Alamat <textarea name="alamat" class="w-full border p-1 rounded" placeholder="Alamat lengkap RT/RW, Kel, Kec, Propinsi" required></textarea></label>
       <label class="block">Foto <input name="foto" type="file" accept="image/*" class="w-full border p-1" /></label>
     `;
     container.appendChild(div);
@@ -73,7 +73,8 @@
       const nik = div.querySelector('input[name="nik"]').value;
       const nis = div.querySelector('input[name="nis"]').value;
       const nisn = div.querySelector('input[name="nisn"]').value;
-      const alamat = div.querySelector('input[name="alamat"]').value;
+      const ttl = div.querySelector('input[name="ttl"]').value;
+      const alamat = div.querySelector('textarea[name="alamat"]').value;
       const fotoInput = div.querySelector('input[name="foto"]');
       const file = fotoInput.files[0];
 
@@ -81,42 +82,75 @@
       reader.onload = function (e) {
         const imgURL = e.target.result;
 
+        const idKartu = `kartuSiswa${index}`;
         const kartuHTML = `
-          <div class="flex flex-col md:flex-row gap-2 items-start">
-            <!-- Depan -->
-            <div class="kartu relative border shadow rounded p-2" style="background-image: url('images/bg-depan.png')">
-              <div class="absolute top-2 left-2">
-                <img src="images/logo-sekolah.png" alt="Logo" class="logo-sekolah">
+          <div class="flex flex-col items-end space-y-2">
+            <div id="${idKartu}" class="flex flex-col md:flex-row gap-2 items-start">
+              <div class="kartu relative border shadow rounded p-2" style="background-image: url('images/bg-depan.png')">
+                <div class="text-center mb-2">
+                  <div class="flex items-center justify-center space-x-2">
+                    <img src="images/logo-sekolah.png" class="w-10 h-10 object-contain">
+                    <div>
+                      <p class="text-xs font-semibold leading-none">KARTU PELAJAR</p>
+                      <p class="text-sm font-bold">SMKN 6 Kota Serang</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex mt-1">
+                  <div class="w-20 h-24 border bg-white" style="background-image: url('${imgURL}'); background-size: cover; background-position: center;"></div>
+                  <table class="ml-2 text-xs">
+                    <tr><td>Nama</td><td>:</td><td>${nama}</td></tr>
+                    <tr><td>NIK</td><td>:</td><td>${nik}</td></tr>
+                    <tr><td>NIS</td><td>:</td><td>${nis}</td></tr>
+                    <tr><td>NISN</td><td>:</td><td>${nisn}</td></tr>
+                    <tr><td>TTL</td><td>:</td><td>${ttl}</td></tr>
+                    <tr><td>Alamat</td><td>:</td><td>${alamat}</td></tr>
+                  </table>
+                </div>
               </div>
-              <div class="text-center mt-4">
-                <h2 class="text-sm font-bold">SMKN 6 Kota Serang</h2>
-                <p class="text-xs">Kartu Pelajar</p>
-              </div>
-              <div class="flex mt-2">
-                <div class="w-20 h-24 border bg-white" style="background-image: url('${imgURL}'); background-size: cover; background-position: center;"></div>
-                <table class="ml-2">
-                  <tr><td>Nama</td><td>:</td><td>${nama}</td></tr>
-                  <tr><td>NIK</td><td>:</td><td>${nik}</td></tr>
-                  <tr><td>NIS</td><td>:</td><td>${nis}</td></tr>
-                  <tr><td>NISN</td><td>:</td><td>${nisn}</td></tr>
-                  <tr><td>Alamat</td><td>:</td><td>${alamat}</td></tr>
-                </table>
+
+              <div class="kartu border shadow rounded p-4 text-xs" style="background-image: url('images/bg-belakang.png')">
+                <h2 class="font-bold mb-2 text-sm">DISCLAIMER</h2>
+                <p>Kartu ini adalah identitas resmi siswa SMKN 6 Kota Serang. Apabila kartu ini ditemukan, harap dikembalikan ke sekolah. Penyalahgunaan kartu ini dapat dikenakan sanksi sesuai peraturan sekolah.</p>
               </div>
             </div>
-
-            <!-- Belakang -->
-            <div class="kartu border shadow rounded p-4 text-xs" style="background-image: url('images/bg-belakang.png')">
-              <h2 class="font-bold mb-2 text-sm">Pemberitahuan</h2>
-              <p>Kartu ini adalah identitas resmi siswa SMKN 6 Kota Serang. Apabila kartu ini ditemukan, harap dikembalikan ke SMK/SMA.... Penyalahgunaan kartu ini dapat dikenakan sanksi sesuai peraturan SMK/SMA yang berlaku.</p>
+            <div class="flex justify-end w-full space-x-2 mt-2">
+              <button onclick="downloadSiswaPNG('${idKartu}', '${nama}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">PNG</button>
+              <button onclick="downloadSiswaPDF('${idKartu}', '${nama}')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">PDF</button>
             </div>
           </div>
         `;
+
         wrapper.innerHTML += kartuHTML;
       };
 
       if (file) {
         reader.readAsDataURL(file);
       }
+    });
+  }
+
+  function downloadSiswaPNG(divId, nama) {
+    const target = document.getElementById(divId);
+    html2canvas(target, { backgroundColor: null }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `kartu_${nama.replace(/\\s+/g, '_')}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    });
+  }
+
+  function downloadSiswaPDF(divId, nama) {
+    const { jsPDF } = window.jspdf;
+    const target = document.getElementById(divId);
+    html2canvas(target, { backgroundColor: null }).then(canvas => {
+      const pdf = new jsPDF({ orientation: 'landscape' });
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`kartu_${nama.replace(/\\s+/g, '_')}.pdf`);
     });
   }
 
