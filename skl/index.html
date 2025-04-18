@@ -1,0 +1,956 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Kelulusan Sekolah</title>
+    
+    <!-- Framework -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .card-custom {
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .card-custom:hover {
+            transform: translateY(-5px);
+        }
+
+        .nav-tabs {
+            background: var(--primary-color);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .preview-image {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        #studentProfile {
+            display: none;
+        }
+
+        .profile-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .profile-table td {
+            padding: 12px 0;
+            vertical-align: top;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .profile-table td:first-child {
+            width: 35%;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .profile-table td:nth-child(2) {
+            width: 5%;
+            text-align: center;
+        }
+
+        .profile-table td:last-child {
+            width: 60%;
+        }
+
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #ced4da;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--secondary-color);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .birth-date-input {
+            position: relative;
+        }
+
+        .birth-date-input .calendar-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            pointer-events: none;
+        }
+
+        #adminContent {
+            display: none;
+        }
+
+        .login-modal .modal-dialog {
+            max-width: 400px;
+        }
+
+        /* Countdown Timer Styles */
+        #countdown-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        #countdown-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        #countdown-timer {
+            font-family: 'Courier New', monospace;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--danger-color);
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        #waktu-pengumuman {
+            font-size: 1.1rem;
+            margin-top: 15px;
+            color: var(--primary-color);
+        }
+
+        #searchSection {
+            display: none;
+        }
+
+        .btn-access {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            padding: 10px 25px;
+        }
+
+        .flip-clock {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .flip-digit {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 2rem;
+            min-width: 50px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .flip-digit::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .flip-label {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            color: var(--primary-color);
+        }
+
+        .flip-separator {
+            display: flex;
+            align-items: center;
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        /* Checkbox styling */
+        .form-check-input {
+            width: 1.2em;
+            height: 1.2em;
+            margin-top: 0.25em;
+        }
+
+        /* Bulk action buttons */
+        .bulk-actions {
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        /* Print styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-area, .print-area * {
+                visibility: visible;
+            }
+            .print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Modal -->
+    <div class="modal fade login-modal" id="loginModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-lock"></i> Login Admin</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <ul class="nav nav-tabs nav-fill">
+            <li class="nav-item">
+                <a class="nav-link text-white" id="admin-tab" data-bs-toggle="tab" href="#admin">
+                    <i class="fas fa-user-shield"></i> Admin
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active text-white" id="student-tab" data-bs-toggle="tab" href="#student">
+                    <i class="fas fa-search"></i> Cek Kelulusan
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-4">
+            <!-- Admin Panel -->
+            <div class="tab-pane fade" id="admin">
+                <div class="card card-custom">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fas fa-user-shield"></i> Panel Admin</h4>
+                    </div>
+                    <div class="card-body" id="adminContent">
+                        <!-- Konten admin akan dimuat setelah login -->
+                    </div>
+                    <div class="card-body text-center" id="loginPrompt">
+                        <h5 class="text-muted mb-4">Silakan login untuk mengakses panel admin</h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            <i class="fas fa-sign-in-alt"></i> Login Admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Panel -->
+            <div class="tab-pane fade show active" id="student">
+                <div class="card card-custom">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0"><i class="fas fa-search"></i> Cek Kelulusan</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="countdown-container">
+                            <h3 id="countdown-title">Pengumuman Kelulusan Akan Dibuka Dalam:</h3>
+                            <div class="flip-clock">
+                                <div>
+                                    <div class="flip-digit" id="countdown-days">00</div>
+                                    <div class="flip-label">Hari</div>
+                                </div>
+                                <div class="flip-separator">:</div>
+                                <div>
+                                    <div class="flip-digit" id="countdown-hours">00</div>
+                                    <div class="flip-label">Jam</div>
+                                </div>
+                                <div class="flip-separator">:</div>
+                                <div>
+                                    <div class="flip-digit" id="countdown-minutes">00</div>
+                                    <div class="flip-label">Menit</div>
+                                </div>
+                                <div class="flip-separator">:</div>
+                                <div>
+                                    <div class="flip-digit" id="countdown-seconds">00</div>
+                                    <div class="flip-label">Detik</div>
+                                </div>
+                            </div>
+                            <div id="waktu-pengumuman"></div>
+                            <button id="btn-access" class="btn btn-success btn-access" style="display: none;">
+                                <i class="fas fa-unlock"></i> Akses Sekarang
+                            </button>
+                        </div>
+
+                        <div id="searchSection">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchNISN" placeholder="Masukkan NISN...">
+                                <button class="btn btn-primary" onclick="searchStudent()">
+                                    <i class="fas fa-search"></i> Cari
+                                </button>
+                            </div>
+
+                            <div id="studentProfile" class="mt-4">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">
+                                        <img id="profileImage" class="preview-image mb-3">
+                                        <button id="downloadSKL" class="btn btn-success w-100" onclick="downloadSKL()">
+                                            <i class="fas fa-download"></i> Download SKL
+                                        </button>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <h4 class="mb-3" id="profileName"></h4>
+                                        <table class="profile-table">
+                                            <tr>
+                                                <td>NISN</td>
+                                                <td>:</td>
+                                                <td id="profileNISN"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Tempat Lahir</td>
+                                                <td>:</td>
+                                                <td id="profileTempatLahir"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Tanggal Lahir</td>
+                                                <td>:</td>
+                                                <td id="profileTanggalLahir"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Status</td>
+                                                <td>:</td>
+                                                <td><span id="profileStatus" class="status-badge"></span></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Data storage
+        let students = JSON.parse(localStorage.getItem('students')) || [];
+        let files = JSON.parse(localStorage.getItem('files')) || {};
+        let systemSettings = JSON.parse(localStorage.getItem('systemSettings')) || { waktuAkses: null };
+        let isAdminLoggedIn = false;
+
+        // Format tanggal
+        const formatDate = (dateString) => {
+            const options = { 
+                weekday: 'long', 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const date = new Date(dateString);
+            return isNaN(date) ? '-' : date.toLocaleDateString('id-ID', options);
+        };
+
+        // Format datetime-local untuk input
+        const formatDateTimeLocal = (dateString) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            if (isNaN(date)) return '';
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+
+        // Update countdown timer
+        function updateCountdown() {
+            if (!systemSettings.waktuAkses) {
+                document.getElementById('countdown-container').innerHTML = `
+                    <div class="alert alert-info">
+                        <h4>Pengumuman Kelulusan</h4>
+                        <p>Jadwal pengumuman kelulusan belum ditentukan.</p>
+                        <p>Silakan hubungi administrator sekolah.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const now = new Date();
+            const targetDate = new Date(systemSettings.waktuAkses);
+            const diff = targetDate - now;
+
+            // Update waktu pengumuman
+            document.getElementById('waktu-pengumuman').innerHTML = `
+                Pengumuman akan dibuka pada:<br>
+                <strong>${formatDate(systemSettings.waktuAkses)}</strong>
+            `;
+
+            if (diff <= 0) {
+                // Waktu sudah tercapai
+                document.getElementById('countdown-title').textContent = 'Pengumuman Kelulusan Telah Dibuka';
+                document.getElementById('countdown-container').style.display = 'none';
+                document.getElementById('searchSection').style.display = 'block';
+                return;
+            }
+
+            // Hitung waktu
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            // Update tampilan digital clock
+            document.getElementById('countdown-days').textContent = String(days).padStart(2, '0');
+            document.getElementById('countdown-hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('countdown-minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('countdown-seconds').textContent = String(seconds).padStart(2, '0');
+
+            setTimeout(updateCountdown, 1000);
+        }
+
+        // Login handler
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === 'admin' && password === 'admin123') {
+                isAdminLoggedIn = true;
+                document.getElementById('loginPrompt').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                loadAdminContent();
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+                modal.hide();
+            } else {
+                alert('Username atau password salah!');
+            }
+        });
+
+        // Load admin content after login
+        function loadAdminContent() {
+            document.getElementById('adminContent').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fas fa-clock"></i> Pengaturan Waktu Pengumuman</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="systemSettingsForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Waktu Pembukaan Pengumuman</label>
+                                        <input type="datetime-local" class="form-control" id="waktuAkses" value="${formatDateTimeLocal(systemSettings.waktuAkses)}">
+                                        <small class="text-muted">Atur tanggal dan jam pengumuman kelulusan akan dibuka</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Simpan Pengaturan
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fas fa-users"></i> Kelola Data Siswa</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="studentForm">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">NISN</label>
+                                            <input type="text" class="form-control" id="nisn" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Nama Lengkap</label>
+                                            <input type="text" class="form-control" id="nama" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tempat Lahir</label>
+                                            <input type="text" class="form-control" id="tempatLahir" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tanggal Lahir</label>
+                                            <div class="birth-date-input">
+                                                <input type="date" class="form-control" id="tanggalLahir" required>
+                                                <i class="fas fa-calendar-alt calendar-icon"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Status</label>
+                                            <select class="form-select" id="status" required>
+                                                <option value="Lulus">Lulus</option>
+                                                <option value="Tidak Lulus">Tidak Lulus</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">File SKL (PDF)</label>
+                                            <input type="file" class="form-control" id="sklFile" accept=".pdf" required>
+                                            <small class="text-muted">Format nama: skl_NISN.pdf</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Foto Siswa</label>
+                                            <input type="file" class="form-control" id="fotoSiswa" accept="image/*" required>
+                                        </div>
+                                        <div class="col-12 mt-4">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-save"></i> Simpan Data
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <hr class="my-5">
+
+                                <div class="file-upload-area mb-4" id="csvUploadArea">
+                                    <i class="fas fa-file-csv fa-3x text-secondary mb-3"></i>
+                                    <h5>Seret file CSV ke sini atau klik untuk memilih</h5>
+                                    <p class="text-muted mb-2">Format: NISN,Nama,Tempat Lahir,Tanggal Lahir (YYYY-MM-DD),Status</p>
+                                    <input type="file" id="csvFileInput" accept=".csv" hidden>
+                                    <button class="btn btn-outline-primary" onclick="document.getElementById('csvFileInput').click()">
+                                        <i class="fas fa-file-import"></i> Pilih File
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bulk-actions no-print mb-3">
+                    <button class="btn btn-primary me-2" onclick="exportSelectedToCSV()">
+                        <i class="fas fa-file-export"></i> Export Selected
+                    </button>
+                    <button class="btn btn-secondary" onclick="printSelected()">
+                        <i class="fas fa-print"></i> Print Selected
+                    </button>
+                    <button class="btn btn-outline-danger float-end" onclick="clearSelection()">
+                        <i class="fas fa-times"></i> Clear Selection
+                    </button>
+                </div>
+
+                <h5 class="mb-3">Daftar Siswa</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50px">
+                                    <input type="checkbox" id="selectAll" class="form-check-input">
+                                </th>
+                                <th>NISN</th>
+                                <th>Nama</th>
+                                <th>Tempat/Tgl Lahir</th>
+                                <th>Status</th>
+                                <th class="no-print">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTable"></tbody>
+                    </table>
+                </div>
+            `;
+
+            // Set up event listeners for admin content
+            document.getElementById('systemSettingsForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                systemSettings.waktuAkses = document.getElementById('waktuAkses').value;
+                localStorage.setItem('systemSettings', JSON.stringify(systemSettings));
+                alert('Pengaturan waktu pengumuman berhasil disimpan!');
+                updateCountdown();
+            });
+
+            document.getElementById('studentForm').addEventListener('submit', handleFormSubmit);
+            document.getElementById('csvFileInput').addEventListener('change', handleCSVImport);
+            
+            // Select all checkbox
+            document.getElementById('selectAll').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.student-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                toggleBulkActions();
+            });
+
+            loadStudents();
+        }
+
+        // Toggle bulk action buttons
+        function toggleBulkActions() {
+            const selectedCount = document.querySelectorAll('.student-checkbox:checked').length;
+            const bulkActions = document.querySelector('.bulk-actions');
+            
+            if (selectedCount > 0) {
+                bulkActions.style.display = 'block';
+            } else {
+                bulkActions.style.display = 'none';
+            }
+        }
+
+        // Clear selection
+        function clearSelection() {
+            document.getElementById('selectAll').checked = false;
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            toggleBulkActions();
+        }
+
+        // Export selected to CSV
+        function exportSelectedToCSV() {
+            const selectedRows = document.querySelectorAll('.student-checkbox:checked');
+            if (selectedRows.length === 0) {
+                alert('Pilih setidaknya satu siswa untuk diexport!');
+                return;
+            }
+
+            const selectedNISNs = Array.from(selectedRows).map(row => row.value);
+            const selectedStudents = students.filter(student => selectedNISNs.includes(student.nisn));
+
+            const csvContent = [
+                ['NISN', 'Nama', 'Tempat Lahir', 'Tanggal Lahir', 'Status'].join(','),
+                ...selectedStudents.map(s => [
+                    s.nisn,
+                    s.nama,
+                    s.tempatLahir,
+                    s.tanggalLahir,
+                    s.status
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data_siswa_selected.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Print selected
+        function printSelected() {
+            const selectedRows = document.querySelectorAll('.student-checkbox:checked');
+            if (selectedRows.length === 0) {
+                alert('Pilih setidaknya satu siswa untuk dicetak!');
+                return;
+            }
+
+            const selectedNISNs = Array.from(selectedRows).map(row => row.value);
+            const selectedStudents = students.filter(student => selectedNISNs.includes(student.nisn));
+
+            // Create print content
+            const printContent = `
+                <div class="print-area">
+                    <h3 class="text-center mb-4">Daftar Siswa Terpilih</h3>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>NISN</th>
+                                <th>Nama</th>
+                                <th>Tempat/Tgl Lahir</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${selectedStudents.map((student, index) => `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${student.nisn}</td>
+                                    <td>${student.nama}</td>
+                                    <td>${student.tempatLahir}, ${formatDate(student.tanggalLahir)}</td>
+                                    <td>${student.status}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="mt-4 text-end">
+                        <p>Tanggal Cetak: ${formatDate(new Date())}</p>
+                    </div>
+                </div>
+            `;
+
+            // Open print window
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Cetak Data Siswa</title>
+                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                        <style>
+                            @media print {
+                                @page { size: portrait; margin: 1cm; }
+                                body { font-size: 12pt; }
+                                table { width: 100%; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${printContent}
+                        <script>
+                            window.onload = function() {
+                                setTimeout(function() {
+                                    window.print();
+                                    window.close();
+                                }, 200);
+                            };
+                        <\/script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        // Form submission handler
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const nisn = document.getElementById('nisn').value;
+            const studentData = {
+                nisn,
+                nama: document.getElementById('nama').value,
+                tempatLahir: document.getElementById('tempatLahir').value,
+                tanggalLahir: document.getElementById('tanggalLahir').value,
+                status: document.getElementById('status').value,
+            };
+
+            // Handle file uploads
+            const processFile = (file, type) => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        files[nisn] = files[nisn] || {};
+                        files[nisn][type] = e.target.result;
+                        localStorage.setItem('files', JSON.stringify(files));
+                        resolve();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            const sklFile = document.getElementById('sklFile').files[0];
+            const fotoFile = document.getElementById('fotoSiswa').files[0];
+            
+            Promise.all([
+                sklFile ? processFile(sklFile, 'skl') : Promise.resolve(),
+                fotoFile ? processFile(fotoFile, 'foto') : Promise.resolve()
+            ]).then(() => {
+                const index = students.findIndex(s => s.nisn === nisn);
+                if (index > -1) students[index] = studentData;
+                else students.push(studentData);
+                
+                localStorage.setItem('students', JSON.stringify(students));
+                loadStudents();
+                e.target.reset();
+            });
+        }
+
+        // Load data siswa
+        function loadStudents() {
+            if (!document.getElementById('studentTable')) return;
+            
+            const tbody = document.getElementById('studentTable');
+            tbody.innerHTML = students.map(student => `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="form-check-input student-checkbox" value="${student.nisn}" onchange="toggleBulkActions()">
+                    </td>
+                    <td>${student.nisn}</td>
+                    <td>${student.nama}</td>
+                    <td>${student.tempatLahir}, ${formatDate(student.tanggalLahir)}</td>
+                    <td><span class="badge ${student.status === 'Lulus' ? 'bg-success' : 'bg-danger'}">${student.status}</span></td>
+                    <td class="no-print">
+                        <button class="btn btn-sm btn-warning" onclick="editStudent('${student.nisn}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteStudent('${student.nisn}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Edit data
+        function editStudent(nisn) {
+            if (!isAdminLoggedIn) {
+                alert('Silakan login sebagai admin terlebih dahulu!');
+                return;
+            }
+            
+            const student = students.find(s => s.nisn === nisn);
+            ['nisn', 'nama', 'tempatLahir', 'tanggalLahir', 'status'].forEach(field => {
+                document.getElementById(field).value = student[field];
+            });
+        }
+
+        // Hapus data
+        function deleteStudent(nisn) {
+            if (!isAdminLoggedIn) {
+                alert('Silakan login sebagai admin terlebih dahulu!');
+                return;
+            }
+            
+            if (confirm(`Hapus data siswa ${nisn}?`)) {
+                students = students.filter(s => s.nisn !== nisn);
+                localStorage.setItem('students', JSON.stringify(students));
+                delete files[nisn];
+                localStorage.setItem('files', JSON.stringify(files));
+                loadStudents();
+            }
+        }
+
+        // Cari siswa
+        function searchStudent() {
+            const nisn = document.getElementById('searchNISN').value;
+            const student = students.find(s => s.nisn === nisn);
+            const profile = document.getElementById('studentProfile');
+            
+            if (student) {
+                profile.style.display = 'block';
+                document.getElementById('profileName').textContent = student.nama;
+                document.getElementById('profileNISN').textContent = student.nisn;
+                document.getElementById('profileTempatLahir').textContent = student.tempatLahir;
+                document.getElementById('profileTanggalLahir').textContent = formatDate(student.tanggalLahir);
+                
+                const statusBadge = document.getElementById('profileStatus');
+                statusBadge.textContent = student.status;
+                statusBadge.className = `status-badge ${student.status === 'Lulus' ? 'bg-success' : 'bg-danger'}`;
+                
+                document.getElementById('profileImage').src = files[nisn]?.foto || '';
+            } else {
+                profile.style.display = 'none';
+                alert('Siswa tidak ditemukan!');
+            }
+        }
+
+        // Download SKL
+        function downloadSKL() {
+            const nisn = document.getElementById('searchNISN').value;
+            const fileData = files[nisn]?.skl;
+            if (fileData) {
+                const link = document.createElement('a');
+                link.href = fileData;
+                link.download = `skl_${nisn}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert('File SKL tidak ditemukan!');
+            }
+        }
+
+        // CSV import
+        function handleCSVImport(e) {
+            if (!isAdminLoggedIn) {
+                alert('Silakan login sebagai admin terlebih dahulu!');
+                return;
+            }
+            
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const rows = e.target.result.split('\n');
+                const headers = rows[0].toLowerCase().split(',');
+                
+                if (!['nisn', 'nama', 'tempat lahir', 'tanggal lahir', 'status'].every(h => headers.includes(h))) {
+                    alert('Format CSV tidak valid!');
+                    return;
+                }
+
+                const newStudents = rows.slice(1)
+                    .filter(row => row.trim())
+                    .map(row => {
+                        const [nisn, nama, tempatLahir, tanggalLahir, status] = row.split(',');
+                        return { 
+                            nisn: nisn.trim(), 
+                            nama: nama.trim(), 
+                            tempatLahir: tempatLahir.trim(), 
+                            tanggalLahir: tanggalLahir.trim(), 
+                            status: status.trim() 
+                        };
+                    });
+
+                students = [...students, ...newStudents];
+                localStorage.setItem('students', JSON.stringify(students));
+                loadStudents();
+                alert(`${newStudents.length} data berhasil diimpor!`);
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show student tab by default
+            new bootstrap.Tab(document.getElementById('student-tab')).show();
+            
+            // Set up admin tab click to show login if not logged in
+            document.getElementById('admin-tab').addEventListener('click', (e) => {
+                if (!isAdminLoggedIn) {
+                    e.preventDefault();
+                    const modal = new bootstrap.Modal(document.getElementById('loginModal'));
+                    modal.show();
+                }
+            });
+
+            // Initialize countdown
+            updateCountdown();
+        });
+    </script>
+</body>
+</html>
